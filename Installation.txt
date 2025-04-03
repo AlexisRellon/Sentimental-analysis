@@ -1,0 +1,10 @@
+python -m venv venv_sentimental
+
+.\venv_sentimental\Scripts\activate
+
+python -m pip install torch transformers nltk emoji flask flask-cors joblib numpy
+
+python -c "import nltk; nltk.download('stopwords'); nltk.download('punkt')"
+
+# Run development server
+python sentiment_api.py

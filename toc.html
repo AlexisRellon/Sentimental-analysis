@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentimentify - Terms and Condition</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'spotify-green': '#1ED760',
+                        'spotify-black': '#121212',
+                        'spotify-grey': '#B3B3B3',
+                        'spotify-light-grey': '#EFEFEF',
+                        'spotify-negative': '#E91429',
+                    },
+                    fontFamily: {
+                        'spotify': ['Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+</head>
+<body class="font-spotify bg-spotify-black text-white p-6 flex items-center justify-center min-h-screen">
+    <div class="max-w-3xl mx-auto bg-spotify-light-grey text-spotify-black rounded-lg p-6">
+        <h1 class="text-2xl font-bold mb-4">Terms and Conditions</h1>
+        <p class="mb-4">Welcome to Sentimentify! By using this service, you agree to the following terms and conditions:</p>
+
+        <ul class="list-disc list-inside mb-4">
+            <li>This service uses a sentiment analysis model to predict the sentiment of user-provided text. While we strive for accuracy, the model may occasionally produce false-positive or false-negative predictions.</li>
+            <li>Users are advised to interpret the results with caution and not rely solely on the predictions for critical decisions.</li>
+            <li>We do not store or share your input data with third parties. All data processing is performed securely.</li>
+            <li>By using this service, you agree to hold Sentimentify harmless for any consequences arising from the use of the predictions provided.</li>
+        </ul>
+
+        <p class="mb-4">If you do not agree to these terms, please refrain from using this service.</p>
+
+        <div class="flex justify-between">
+            <p class="text-sm text-spotify-grey">Last updated: March 27, 2025</p>
+            <button>
+                <a href="index.html" class="mt-4 bg-spotify-green text-white font-bold py-2 px-4 rounded-full hover:bg-spotify-black transition duration-300">Back to Home</a>
+            </button>
+        </div>
+    </div>
+</body>
+</html>

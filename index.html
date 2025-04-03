@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentimentify - Spotify Review Sentiment Analysis</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Material Icons -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- Google Material Symbols -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'spotify-green': '#1DB954',
+                        'spotify-green-highlight': '#1ED760',
+                        'spotify-black': '#191414',
+                        'spotify-grey': '#B3B3B3',
+                        'spotify-light-grey': '#EFEFEF',
+                        'spotify-negative': '#E91429',
+                    },
+                    fontFamily: {
+                        'spotify': ['Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        .material-icons {
+            vertical-align: middle;
+        }
+        .material-symbols-outlined {
+            vertical-align: middle;
+        }
+        .suggestion {
+            color: #B3B3B3;
+            position: absolute;
+            pointer-events: none;
+        }
+        #suggestion-wrapper {
+            position: relative;
+        }
+        /* History panel styling */
+        .history-panel {
+            max-height: 300px;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+        .history-item {
+            border-left: 3px solid transparent;
+            transition: all 0.2s ease;
+        }
+        .history-item:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        .history-item.positive {
+            border-left-color: #1DB954;
+        }
+        .history-item.neutral {
+            border-left-color: #B3B3B3;
+        }
+        .history-item.negative {
+            border-left-color: #E91429;
+        }
+        /* Custom scrollbar for history panel */
+        .history-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+        .history-panel::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+        .history-panel::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+        .history-panel::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body class="font-spotify bg-spotify-black text-white overflow-x-hidden">
+    <!-- Terms and Agreement Modal -->
+    <div id="terms-modal" class="fixed inset-0 bg-black bg-opacity-85 z-50 flex items-center justify-center">
+        <div class="bg-[#282828] rounded-lg w-[480px] max-w-[90%] p-6">
+            <h2 class="text-2xl font-bold mb-4">Terms and Agreement</h2>
+            <div class="text-spotify-grey mb-6 leading-relaxed">
+                <p>By using this service, you agree to our terms and conditions.</p>
+                <p>The sentiment analysis model may occasionally produce false-positive or false-negative predictions.</p>
+                <p>Please interpret the results with caution and not rely solely on the predictions for critical decisions.</p>
+                <p>We do not store your review data or share it with any third parties.</p>
+            </div>
+            <div class="flex justify-end">
+                <a href="toc.html" class="bg-transparent text-white border border-white border-opacity-30 rounded-full py-2 px-8 font-bold text-sm mr-2 hover:scale-105 transition-transform">Read More</a>
+                <button id="accept" class="bg-spotify-green text-spotify-black rounded-full py-2 px-8 font-bold text-sm hover:scale-105 hover:bg-spotify-green-highlight transition">Accept</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="w-60 bg-black py-6 flex flex-col">
+            <div class="px-6 mb-6">
+                <svg viewBox="0 0 1134 340" xmlns="http://www.w3.org/2000/svg" class="w-32">
+                    <path d="M8 171c0 92 76 168 168 168s168-76 168-168S268 4 176 4 8 79 8 171zm230 78c-39-24-89-30-147-17-14 2-16-18-4-20 64-15 118-8 162 19 11 7 0 24-11 18zm17-45c-45-28-114-36-167-20-17 5-23-21-7-25 61-18 136-9 188 23 14 9 0 31-14 22zM80 133c-17 6-28-23-9-30 59-18 159-15 221 22 17 9 1 37-17 27-54-32-144-35-195-19zm379 91c-17 0-33-6-47-20-1 0-1 1-1 1l-16 19c-1 1-1 2 0 3 18 16 40 24 64 24 34 0 55-19 55-47 0-24-15-37-50-46-29-7-34-12-34-22s10-16 23-16 25 5 39 15c0 0 1 1 2 1s1-1 1-1l14-20c1-1 1-1 0-2-16-13-35-20-56-20-31 0-53 19-53 46 0 29 20 38 52 46 28 6 32 12 32 22 0 11-10 17-25 17zm95-77v-13c0-1-1-2-2-2h-26c-1 0-2 1-2 2v147c0 1 1 2 2 2h26c1 0 2-1 2-2v-46c10 11 21 16 36 16 27 0 54-21 54-61s-27-60-54-60c-15 0-26 5-36 17zm30 78c-18 0-31-15-31-35s13-34 31-34 30 14 30 34-12 35-30 35zm68-34c0 34 27 60 62 60s62-27 62-61-26-60-61-60-63 27-63 61zm30-1c0-20 13-34 32-34s33 15 33 35-13 34-32 34-33-15-33-35zm140-58v-29c0-1 0-2-1-2h-26c-1 0-2 1-2 2v29h-13c-1 0-2 1-2 2v22c0 1 1 2 2 2h13v58c0 23 11 35 34 35 9 0 18-2 25-6 1 0 1-1 1-2v-21c0-1 0-2-1-2h-2c-5 3-11 4-16 4-8 0-12-4-12-12v-54h30c1 0 2-1 2-2v-22c0-1-1-2-2-2h-30zm129-3c0-11 4-15 13-15 5 0 10 0 15 2h1s1-1 1-2V93c0-1 0-2-1-2-5-2-12-3-22-3-24 0-36 14-36 39v5h-13c-1 0-2 1-2 2v22c0 1 1 2 2 2h13v89c0 1 1 2 2 2h26c1 0 1-1 1-2v-89h25l37 89c-4 9-8 11-14 11-5 0-10-1-15-4h-1l-1 1-9 19c0 1 0 3 1 3 9 5 17 7 27 7 19 0 30-9 39-33l45-116v-2c0-1-1-1-2-1h-27c-1 0-1 1-1 2l-28 78-30-78c0-1-1-2-2-2h-44v-3zm-83 3c-1 0-2 1-2 2v113c0 1 1 2 2 2h26c1 0 1-1 1-2V134c0-1 0-2-1-2h-26zm-6-33c0 10 9 19 19 19s18-9 18-19-8-18-18-18-19 8-19 18zm245 69c10 0 19-8 19-18s-9-18-19-18-18 8-18 18 8 18 18 18zm0-34c9 0 17 7 17 16s-8 16-17 16-16-7-16-16 7-16 16-16zm4 18c3-1 5-3 5-6 0-4-4-6-8-6h-8v19h4v-6h4l4 6h5zm-3-9c2 0 4 1 4 3s-2 3-4 3h-4v-6h4z" fill="#fff"></path>
+                </svg>
+            </div>
+            <a href="#" class="flex items-center px-6 h-10 text-spotify-grey hover:text-white font-bold transition-colors duration-200 active:text-white">
+                <span class="material-icons mr-4">home</span>
+                Home
+            </a>
+            <a href="#" id="analysis" class="flex items-center px-6 h-10 text-white font-bold transition-colors duration-200">
+                <span class="material-icons mr-4">analytics</span>
+                Sentiment Analysis
+            </a>
+            <a href="#" id="history-link" class="flex items-center px-6 h-10 text-spotify-grey hover:text-white font-bold transition-colors duration-200">
+                <span class="material-icons mr-4">library_music</span>
+                Your Reviews
+            </a>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 bg-gradient-to-b from-[#3b3054] to-spotify-black p-6 overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center bg-black bg-opacity-70 rounded-full p-0.5">
+                    <img src="https://i.pravatar.cc/150?img=13" alt="User" class="w-7 h-7 rounded-full mr-2">
+                    <span class="mr-2 font-bold">User</span>
+                </div>
+            </div>
+
+            <h1 class="text-3xl font-bold mb-6">Spotify Review Sentiment Analysis</h1>
+
+            <!-- Main Analysis Panel -->
+            <div id="analysis-panel" class="flex flex-col bg-black bg-opacity-30 rounded-lg p-5 mb-8 transition-colors duration-300 hover:bg-opacity-40">
+                <p class="mb-4">Enter your Spotify review below:</p>
+                
+                <div id="suggestion-wrapper" class="relative mb-[4rem]">
+                    <textarea id="review" rows="4" placeholder="Write your review here... (e.g., 'This app has been incredible for discovering new music!')" class="w-full bg-white bg-opacity-10 border-none rounded p-3 text-white font-spotify text-sm resize-none focus:outline-none focus:ring-2 focus:ring-spotify-green"></textarea>
+                    <div id="suggestion-text" class="suggestion p-3 text-sm bg-spotify-black/25 rounded"></div>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <button id="analyze" class="bg-spotify-green text-spotify-black border-none rounded-full py-2 px-8 font-bold text-sm cursor-pointer hover:scale-105 hover:bg-spotify-green-highlight transition-transform">Analyze</button>
+                        <div id="loading" class="ml-4 hidden">
+                            <div class="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-spotify-green"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-xs text-spotify-grey">
+                        Press <kbd class="px-2 py-1 bg-white bg-opacity-10 rounded">Tab</kbd> to complete suggestion or 
+                        <kbd class="px-2 py-1 bg-white bg-opacity-10 rounded">Enter</kbd> to submit
+                    </div>
+                </div>
+                
+                <div id="result" class="mt-5 hidden">
+                    <div class="flex items-center mb-3">
+                        <div id="sentiment-icon" class="w-9 h-9 rounded-full flex items-center justify-center mr-3"></div>
+                        <div>
+                            <div id="sentiment-text" class="text-xl font-bold"></div>
+                            <div>Confidence: <span id="confidence-value"></span>%</div>
+                            <div class="h-1 bg-white bg-opacity-10 rounded overflow-hidden mt-2">
+                                <div id="confidence-bar" class="h-full rounded"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <p id="sentiment-explanation" class="mt-4"></p>
+                    
+                    <div class="mt-6 pt-6 border-t border-white border-opacity-10">
+                        <h3 class="text-lg font-bold mb-2">About Sentiment Analysis</h3>
+                        <p class="text-sm text-spotify-grey">
+                            This analysis was performed using a DistilBERT model fine-tuned on thousands of Spotify reviews. 
+                            The model classifies reviews as positive, neutral, or negative based on the text content. 
+                            While generally accurate, be aware that it may occasionally produce false-positive or false-negative predictions.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Review History Panel -->
+            <div id="history-panel" class="bg-black bg-opacity-30 rounded-lg p-5 mb-8 hidden">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold">Your Review History</h2>
+                    <button id="clear-history" class="text-sm text-spotify-grey hover:text-white transition-colors duration-200">
+                        <span class="material-icons text-sm align-middle mr-1">delete</span>
+                        Clear History
+                    </button>
+                </div>
+                
+                <div id="review-history-list" class="history-panel">
+                    <!-- Review history items will be dynamically inserted here -->
+                    <div class="flex items-center justify-center py-8 text-spotify-grey">
+                        <span class="material-icons mr-2">history</span>
+                        No reviews yet
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('accept').addEventListener('click', function() {
+            document.getElementById('terms-modal').style.display = 'none';
+        });
+
+        // Extended list of example reviews
+        const exampleReviews = [
+            "This app has been incredible for discovering new music! The recommendations are spot on.",
+            "The recent update has made the app slower and it crashes frequently. Very frustrating experience.",
+            "The app works as expected. Nothing special to mention.",
+            "I love how Spotify creates personalized playlists based on my listening habits.",
+            "Customer support never responds to my issues. Terrible service!",
+            "The interface is clean and intuitive, making navigation a breeze.",
+            "Offline mode doesn't work properly, songs disappear from my downloads.",
+            "Sound quality is amazing with premium subscription, totally worth the money.",
+            "Too many ads on the free version, it ruins the listening experience.",
+            "The podcast selection has improved dramatically over the past year.",
+            "Can't stand how it keeps suggesting the same artists over and over.",
+            "The collaborative playlist feature makes sharing music with friends so easy!",
+            "Battery drain is excessive when using this app, needs optimization."
+        ];
+
+        // Review history management
+        const STORAGE_KEY = 'spotify_review_history';
+        let reviewHistory = [];
+        
+        // Load review history from local storage
+        function loadReviewHistory() {
+            const savedHistory = localStorage.getItem(STORAGE_KEY);
+            if (savedHistory) {
+                try {
+                    reviewHistory = JSON.parse(savedHistory);
+                } catch (e) {
+                    console.error('Error loading review history:', e);
+                    reviewHistory = [];
+                }
+            }
+        }
+        
+        // Save review history to local storage
+        function saveReviewHistory() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(reviewHistory));
+            } catch (e) {
+                console.error('Error saving review history:', e);
+            }
+        }
+        
+        // Add a review to history
+        function addReviewToHistory(reviewText, sentiment, confidence) {
+            const timestamp = new Date().toISOString();
+            const review = {
+                text: reviewText,
+                sentiment: sentiment,
+                confidence: confidence,
+                timestamp: timestamp
+            };
+            
+            reviewHistory.unshift(review); // Add to the beginning of array
+            
+            // Keep only the most recent 50 reviews
+            if (reviewHistory.length > 50) {
+                reviewHistory = reviewHistory.slice(0, 50);
+            }
+            
+            saveReviewHistory();
+            updateHistoryDisplay();
+        }
+        
+        // Format date for display
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString();
+        }
+        
+        // Update history panel display
+        function updateHistoryDisplay() {
+            const historyList = document.getElementById('review-history-list');
+            
+            if (reviewHistory.length === 0) {
+                historyList.innerHTML = `
+                    <div class="flex items-center justify-center py-8 text-spotify-grey">
+                        <span class="material-icons mr-2">history</span>
+                        No reviews yet
+                    </div>
+                `;
+                return;
+            }
+            
+            historyList.innerHTML = '';
+            reviewHistory.forEach((review, index) => {
+                // Truncate text for display if too long
+                const displayText = review.text.length > 100 ? 
+                    review.text.substring(0, 100) + '...' : 
+                    review.text;
+                
+                const historyItem = document.createElement('div');
+                historyItem.className = `history-item ${review.sentiment} p-3 mb-2 rounded`;
+                historyItem.innerHTML = `
+                    <div class="flex items-start">
+                        <div class="mr-3 mt-1">
+                            <span class="material-icons ${
+                                review.sentiment === 'positive' ? 'text-spotify-green' : 
+                                review.sentiment === 'negative' ? 'text-spotify-negative' : 
+                                'text-spotify-grey'
+                            }">${
+                                review.sentiment === 'positive' ? 'sentiment_very_satisfied' : 
+                                review.sentiment === 'negative' ? 'sentiment_very_dissatisfied' : 
+                                'sentiment_neutral'
+                            }</span>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm mb-1">${displayText}</p>
+                            <div class="flex items-center text-xs text-spotify-grey">
+                                <span class="mr-2">${formatDate(review.timestamp)}</span>
+                                <span>${review.sentiment} (${review.confidence.toFixed(1)}%)</span>
+                            </div>
+                        </div>
+                        <button class="review-action text-spotify-grey hover:text-white ml-2" 
+                                data-action="reuse" data-index="${index}">
+                            <span class="material-icons text-sm">refresh</span>
+                        </button>
+                    </div>
+                `;
+                
+                // Add event listener for reusing the review
+                historyItem.querySelector('[data-action="reuse"]').addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    document.getElementById('review').value = reviewHistory[index].text;
+                    document.getElementById('suggestion-text').textContent = '';
+                    // Switch to analysis panel
+                    showAnalysisPanel();
+                });
+                
+                historyList.appendChild(historyItem);
+            });
+        }
+
+        // Clear all review history
+        function clearReviewHistory() {
+            if (confirm('Are you sure you want to clear all your review history?')) {
+                reviewHistory = [];
+                saveReviewHistory();
+                updateHistoryDisplay();
+            }
+        }
+        
+        // Show the analysis panel
+        function showAnalysisPanel() {
+            document.getElementById('analysis-panel').classList.remove('hidden');
+            document.getElementById('history-panel').classList.add('hidden');
+            document.querySelector('#history-link').classList.remove('text-white');
+            document.querySelector('#history-link').classList.add('text-spotify-grey');
+        }
+        
+        // Show the history panel
+        function showHistoryPanel() {
+            document.getElementById('analysis-panel').classList.add('hidden');
+            document.getElementById('history-panel').classList.remove('hidden');
+            document.querySelector('#history-link').classList.add('text-white');
+            document.querySelector('#history-link').classList.remove('text-spotify-grey');
+            updateHistoryDisplay();
+        }
+
+        // Initialize history
+        loadReviewHistory();
+        
+        // Event listeners for panels
+        document.getElementById('history-link').addEventListener('click', function(e) {
+            e.preventDefault();
+            showHistoryPanel();
+        });
+        
+        // Add event listener for Sentiment Analysis link - using a more specific selector
+        document.getElementById('analysis').addEventListener('click', function(e) {
+            e.preventDefault();
+            showAnalysisPanel();
+        });
+        
+        document.getElementById('clear-history').addEventListener('click', clearReviewHistory);
+
+        const reviewTextArea = document.getElementById('review');
+        const suggestionText = document.getElementById('suggestion-text');
+        let currentSuggestion = '';
+        let currentIndex = 0;
+
+        // Function to get a suggestion based on user input
+        function getSuggestion(userInput) {
+            if (!userInput) return '';
+            
+            // First try to match with current placeholder as the primary suggestion
+            const placeholder = reviewTextArea.getAttribute('placeholder');
+            const placeholderMatch = placeholder && placeholder.toLowerCase().startsWith(userInput.toLowerCase()) && 
+                placeholder.toLowerCase() !== userInput.toLowerCase();
+                
+            if (placeholderMatch && placeholder.startsWith("Write your review here...") === false) {
+                return placeholder;
+            }
+            
+            // If no match with placeholder, check example reviews as fallback
+            const matchingReviews = exampleReviews.filter(review => 
+                review.toLowerCase().startsWith(userInput.toLowerCase()) && 
+                review.toLowerCase() !== userInput.toLowerCase()
+            );
+            
+            if (matchingReviews.length > 0) {
+                // Use a different suggestion each time by cycling through matches
+                const suggestion = matchingReviews[currentIndex % matchingReviews.length];
+                currentIndex++;
+                return suggestion;
+            }
+            
+            return '';
+        }
+
+        // Update suggestion as user types
+        reviewTextArea.addEventListener('input', function() {
+            const userInput = this.value;
+            currentSuggestion = getSuggestion(userInput);
+            
+            if (currentSuggestion) {
+                // Display only the part of the suggestion that hasn't been typed yet
+                const displaySuggestion = userInput + currentSuggestion.substring(userInput.length);
+                suggestionText.textContent = displaySuggestion;
+            } else {
+                suggestionText.textContent = '';
+            }
+        });
+
+        // Fix Tab key handling to properly autocomplete suggestion
+        reviewTextArea.addEventListener('keydown', function(e) {
+            // Tab key for suggestion completion - prevent default behavior first
+            if (e.key === 'Tab') {
+                e.preventDefault(); // This prevents the focus change
+                
+                if (currentSuggestion) {
+                    this.value = currentSuggestion;
+                    suggestionText.textContent = '';
+                    currentSuggestion = '';
+                }
+                return false;
+            }
+            // Enter key for form submission (only if not creating a new line in the textarea)
+            else if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.getElementById('analyze').click();
+                return false;
+            }
+        });
+
+        // Focus handler to show a suggestion immediately
+        reviewTextArea.addEventListener('focus', function() {
+            if (!this.value) {
+                const randomExample = exampleReviews[Math.floor(Math.random() * exampleReviews.length)];
+                this.setAttribute('placeholder', randomExample);
+            }
+        });
+
+        // Reset suggestion on blur
+        reviewTextArea.addEventListener('blur', function() {
+            // Only hide suggestion, keep the placeholder
+            suggestionText.textContent = '';
+        });
+
+        document.getElementById('analyze').addEventListener('click', async function() {
+            const reviewText = document.getElementById('review').value;
+            if (!reviewText) {
+                alert('Please enter a review to analyze.');
+                return;
+            }
+            
+            // Show loading indicator
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('analyze').disabled = true;
+            document.getElementById('result').classList.add('hidden');
+            
+            try {
+                // Call the sentiment analysis API
+                const response = await fetch('http://localhost:5000/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text: reviewText }),
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                
+                const result = await response.json();
+                displayResult(result, reviewText);
+                
+                // Add this review to history
+                addReviewToHistory(reviewText, result.sentiment, result.confidence);
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error analyzing review. Please try again or check if the sentiment analysis server is running.');
+            } finally {
+                // Hide loading indicator
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('analyze').disabled = false;
+            }
+        });
+        
+        function displayResult(result, originalText) {
+            const sentimentIcon = document.getElementById('sentiment-icon');
+            const sentimentText = document.getElementById('sentiment-text');
+            const confidenceValue = document.getElementById('confidence-value');
+            const confidenceBar = document.getElementById('confidence-bar');
+            const sentimentExplanation = document.getElementById('sentiment-explanation');
+            const resultDiv = document.getElementById('result');
+            
+            // Set sentiment icon and colors
+            let iconHTML = '';
+            let barColor = '';
+            
+            // Clear any previous sentiment class
+            sentimentIcon.classList.remove('bg-spotify-green', 'bg-spotify-grey', 'bg-spotify-negative');
+            
+            // Add the appropriate sentiment class and icon
+            if (result.sentiment === 'positive') {
+                iconHTML = '<span class="material-icons text-white">sentiment_very_satisfied</span>';
+                barColor = '#1DB954'; // spotify-green
+                sentimentIcon.classList.add('bg-spotify-green');
+            } else if (result.sentiment === 'neutral') {
+                iconHTML = '<span class="material-icons text-white">sentiment_neutral</span>';
+                barColor = '#B3B3B3'; // spotify-grey
+                sentimentIcon.classList.add('bg-spotify-grey');
+            } else {
+                iconHTML = '<span class="material-icons text-white">sentiment_very_dissatisfied</span>';
+                barColor = '#E91429'; // spotify-negative
+                sentimentIcon.classList.add('bg-spotify-negative');
+            }
+            
+            // Update the elements
+            sentimentIcon.innerHTML = iconHTML;
+            sentimentText.textContent = `${result.sentiment.charAt(0).toUpperCase() + result.sentiment.slice(1)} Sentiment`;
+            confidenceValue.textContent = result.confidence.toFixed(1);
+            confidenceBar.style.width = `${result.confidence}%`;
+            confidenceBar.style.backgroundColor = barColor;
+            
+            // Generate explanation
+            let explanation;
+            if (result.confidence > 90) {
+                explanation = `This review strongly expresses a ${result.sentiment} sentiment toward Spotify.`;
+            } else if (result.confidence > 70) {
+                explanation = `This review likely expresses a ${result.sentiment} sentiment toward Spotify.`;
+            } else {
+                explanation = `This review may express a ${result.sentiment} sentiment toward Spotify, but with lower confidence.`;
+            }
+            
+            sentimentExplanation.textContent = explanation;
+            
+            // Show the result
+            resultDiv.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
