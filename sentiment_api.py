@@ -210,7 +210,7 @@ if __name__ == '__main__':
     # Load the model when the application starts
     if load_model():
         print(f"Starting server at http://localhost:5000/analyze")
-        app.run(debug=True, port=5000)
+        app.run(debug=True, port=10000)
     else:
         print("Failed to load model. Application will not start.")
         print("\nTROUBLESHOOTING:")
