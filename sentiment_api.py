@@ -69,19 +69,50 @@ def load_model():
     """Load the sentiment analysis model and tokenizer using joblib with CPU compatibility"""
     global model, tokenizer
     
+    # List files in the directory to check if model files exist
+    try:
+        print(f"Current working directory: {os.getcwd()}")
+        model_dir = os.path.dirname(MODEL_PATH)
+        if os.path.exists(model_dir):
+            print(f"Files in {model_dir} directory:")
+            for file in os.listdir(model_dir):
+                print(f" - {file}")
+        else:
+            print(f"Directory {model_dir} does not exist!")
+    except Exception as e:
+        print(f"Error listing directory contents: {e}")
+    
     # Load tokenizer and model from the saved pickle files
     try:
         print("Loading model and tokenizer from .pkl files...")
-        print(f"MODEL_PATH: {MODEL_PATH}")
-        print(f"TOKENIZER_PATH: {TOKENIZER_PATH}")
+        print(f"MODEL_PATH: {os.path.abspath(MODEL_PATH)}")
+        print(f"TOKENIZER_PATH: {os.path.abspath(TOKENIZER_PATH)}")
         
         if not os.path.exists(MODEL_PATH):
             print(f"Error: Model file not found at {MODEL_PATH}")
-            return False
+            # Try with a different path
+            alt_model_path = os.path.join(os.getcwd(), 'distilbert-model_trained', 'sentiment_model.pkl')
+            print(f"Trying alternative path: {alt_model_path}")
+            if os.path.exists(alt_model_path):
+                print("Found model at alternative path, using it instead")
+                global MODEL_PATH
+                MODEL_PATH = alt_model_path
+            else:
+                print("Model not found at alternative path either")
+                return False
             
         if not os.path.exists(TOKENIZER_PATH):
             print(f"Error: Tokenizer file not found at {TOKENIZER_PATH}")
-            return False
+            # Try with a different path
+            alt_tokenizer_path = os.path.join(os.getcwd(), 'distilbert-model_trained', 'tokenizer.pkl')
+            print(f"Trying alternative path: {alt_tokenizer_path}")
+            if os.path.exists(alt_tokenizer_path):
+                print("Found tokenizer at alternative path, using it instead")
+                global TOKENIZER_PATH
+                TOKENIZER_PATH = alt_tokenizer_path
+            else:
+                print("Tokenizer not found at alternative path either")
+                return False
         
         # Custom pickle load function to handle CUDA tensors
         def cpu_unpickler(filename):
@@ -165,6 +196,18 @@ def preprocess_text(text):
     
     return ' '.join(filtered_tokens)
 
+@app.route('/', methods=['GET'])
+def health_check():
+    """Health check endpoint to verify the API is running"""
+    model_status = "loaded" if model is not None else "not loaded"
+    tokenizer_status = "loaded" if tokenizer is not None else "not loaded"
+    return jsonify({
+        "status": "healthy",
+        "service": "sentimentify-api",
+        "model_status": model_status,
+        "tokenizer_status": tokenizer_status
+    })
+
 @app.route('/analyze', methods=['POST', 'OPTIONS'])
 def analyze_sentiment():
     """Analyze the sentiment of the provided text"""
@@ -179,6 +222,21 @@ def analyze_sentiment():
     if not request.json or 'text' not in request.json:
         return jsonify({'error': 'No text provided'}), 400
     
+    # Check if tokenizer and model are loaded
+    if tokenizer is None:
+        return jsonify({
+            'error': 'Tokenizer not loaded. Please check server logs.',
+            'sentiment': 'neutral',
+            'confidence': 0
+        }), 500
+        
+    if model is None:
+        return jsonify({
+            'error': 'Model not loaded. Please check server logs.',
+            'sentiment': 'neutral',
+            'confidence': 0
+        }), 500
+    
     review_text = request.json['text']
     
     # Preprocess the text
@@ -191,33 +249,45 @@ def analyze_sentiment():
             'message': 'Text too short for accurate analysis'
         })
     
-    # Tokenize the text
-    inputs = tokenizer(
-        processed_text,
-        return_tensors="pt",
-        truncation=True,
-        padding="max_length",
-        max_length=128
-    ).to(device)
-    
-    # Predict the sentiment
-    with torch.no_grad():
-        outputs = model(**inputs)
-    
-    # Get prediction and confidence
-    probs = torch.nn.functional.softmax(outputs.logits, dim=1)
-    prediction = torch.argmax(outputs.logits, dim=1).item()
-    confidence = probs[0][prediction].item() * 100
-    
-    # Add CORS headers to the response
-    response = jsonify({
-        'sentiment': sentiment_map[prediction],
-        'confidence': confidence,
-        'processed_text': processed_text
-    })
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    
-    return response
+    try:
+        # Tokenize the text
+        inputs = tokenizer(
+            processed_text,
+            return_tensors="pt",
+            truncation=True,
+            padding="max_length",
+            max_length=128
+        ).to(device)
+        
+        # Predict the sentiment
+        with torch.no_grad():
+            outputs = model(**inputs)
+        
+        # Get prediction and confidence
+        probs = torch.nn.functional.softmax(outputs.logits, dim=1)
+        prediction = torch.argmax(outputs.logits, dim=1).item()
+        confidence = probs[0][prediction].item() * 100
+        
+        # Add CORS headers to the response
+        response = jsonify({
+            'sentiment': sentiment_map[prediction],
+            'confidence': confidence,
+            'processed_text': processed_text
+        })
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        
+        return response
+        
+    except Exception as e:
+        print(f"Error during sentiment analysis: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        return jsonify({
+            'error': str(e),
+            'sentiment': 'neutral',
+            'confidence': 0
+        }), 500
 
 if __name__ == '__main__':
     # Load the model when the application starts
