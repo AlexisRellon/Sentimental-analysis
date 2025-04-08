@@ -67,7 +67,7 @@ sentiment_map = {0: "negative", 1: "neutral", 2: "positive"}
 
 def load_model():
     """Load the sentiment analysis model and tokenizer using joblib with CPU compatibility"""
-    global model, tokenizer
+    global model, tokenizer, MODEL_PATH, TOKENIZER_PATH
     
     # List files in the directory to check if model files exist
     try:
@@ -95,7 +95,6 @@ def load_model():
             print(f"Trying alternative path: {alt_model_path}")
             if os.path.exists(alt_model_path):
                 print("Found model at alternative path, using it instead")
-                global MODEL_PATH
                 MODEL_PATH = alt_model_path
             else:
                 print("Model not found at alternative path either")
@@ -108,7 +107,6 @@ def load_model():
             print(f"Trying alternative path: {alt_tokenizer_path}")
             if os.path.exists(alt_tokenizer_path):
                 print("Found tokenizer at alternative path, using it instead")
-                global TOKENIZER_PATH
                 TOKENIZER_PATH = alt_tokenizer_path
             else:
                 print("Tokenizer not found at alternative path either")
