@@ -47,7 +47,8 @@ except:
     nltk.download('punkt_tab')
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+# Configure CORS with explicit settings
+CORS(app, resources={r"/*": {"origins": "*", "methods": ["GET", "POST", "OPTIONS"], "allow_headers": ["Content-Type"]}})
 
 # Define paths to model components using joblib-serialized files
 MODEL_PATH = './distilbert-model_trained/sentiment_model.pkl'
@@ -164,9 +165,17 @@ def preprocess_text(text):
     
     return ' '.join(filtered_tokens)
 
-@app.route('/analyze', methods=['POST'])
+@app.route('/analyze', methods=['POST', 'OPTIONS'])
 def analyze_sentiment():
     """Analyze the sentiment of the provided text"""
+    # Handle OPTIONS request for CORS preflight
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'success'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        return response
+        
     if not request.json or 'text' not in request.json:
         return jsonify({'error': 'No text provided'}), 400
     
@@ -200,17 +209,23 @@ def analyze_sentiment():
     prediction = torch.argmax(outputs.logits, dim=1).item()
     confidence = probs[0][prediction].item() * 100
     
-    return jsonify({
+    # Add CORS headers to the response
+    response = jsonify({
         'sentiment': sentiment_map[prediction],
         'confidence': confidence,
         'processed_text': processed_text
     })
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    
+    return response
 
 if __name__ == '__main__':
     # Load the model when the application starts
     if load_model():
-        print(f"Starting server at http://localhost:5000/analyze")
-        app.run(debug=True, port=10000)
+        # Get port from environment variable for Render compatibility
+        port = int(os.environ.get('PORT', 10000))
+        print(f"Starting server at http://localhost:{port}/analyze")
+        app.run(debug=True, host='0.0.0.0', port=port)
     else:
         print("Failed to load model. Application will not start.")
         print("\nTROUBLESHOOTING:")
