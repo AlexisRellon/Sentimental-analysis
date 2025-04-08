@@ -111,7 +111,7 @@
                 </svg>
                 <h1 class="text-2xl font-bold text-white">Sentimentify</h1>
             </div>
-            <a href="#" class="flex items-center px-6 h-10 text-spotify-grey hover:text-white font-bold transition-colors duration-200 active:text-white">
+            <a href="#" id="analysis" class="flex items-center px-6 h-10 text-spotify-grey hover:text-white font-bold transition-colors duration-200 active:text-white">
                 <span class="material-icons mr-4">home</span>
                 Home
             </a>
@@ -122,6 +122,11 @@
             <a href="#" id="history-link" class="flex items-center px-6 h-10 text-spotify-grey hover:text-white font-bold transition-colors duration-200">
                 <span class="material-icons mr-4">library_music</span>
                 Your Reviews
+            </a>
+            <!-- Model results -->
+            <a href="#" id="model-results" class="flex items-center px-6 h-10 text-spotify-grey hover:text-white font-bold transition-colors duration-200">
+                <span class="material-icons mr-4">bar_chart</span>
+                Model Results
             </a>
         </div>
 
@@ -201,9 +206,362 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Model Results Panel -->
+            <div id="model-results-panel" class="flex flex-col bg-black bg-opacity-30 rounded-lg p-5 mb-8 hidden">
+                <h2 class="text-xl font-bold mb-4">Model Training Results</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Model Accuracy Card -->
+                    <div class="bg-black bg-opacity-40 p-4 rounded-lg">
+                        <h3 class="text-lg font-bold mb-3 flex items-center">
+                            <span class="material-icons mr-2 text-spotify-green">check_circle</span>
+                            Accuracy Metrics
+                        </h3>
+                        <div class="mb-4" title="Percentage of correctly classified reviews on the validation dataset">
+                            <div class="flex justify-between text-xs mb-1" >
+                                <span>Overall Accuracy</span>
+                                <span class="text-spotify-green font-bold">86.17%</span>
+                            </div>
+                            <div class="h-2 bg-white bg-opacity-10 rounded overflow-hidden">
+                                <div class="h-full bg-spotify-green rounded" style="width: 86.17%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-4" title="Harmonic mean of precision and recall, providing a balance between both metrics">
+                            <div class="flex justify-between text-xs mb-1">
+                                <span>F1 Score</span>
+                                <span class="text-spotify-green font-bold">0.8622</span>
+                            </div>
+                            <div class="h-2 bg-white bg-opacity-10 rounded overflow-hidden">
+                                <div class="h-full bg-spotify-green rounded" style="width: 86.22%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1" title="Loss function value indicating the model's performance on the validation dataset">
+                                <span>Validation Loss</span>
+                                <span class="text-spotify-green font-bold">0.5713</span>
+                            </div>
+                            <div class="h-2 bg-white bg-opacity-10 rounded overflow-hidden">
+                                <div class="h-full bg-spotify-green rounded" style="width: 57.13%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Confusion Matrix -->
+                    <div class="bg-black bg-opacity-40 p-4 rounded-lg">
+                        <h3 class="text-lg font-bold mb-3 flex items-center">
+                            <span class="material-icons mr-2 text-spotify-green">grid_view</span>
+                            Confusion Matrix
+                        </h3>
+                        <div class="flex justify-center">
+                            <table class="w-full text-center">
+                                <thead>
+                                    <tr class="text-xs text-spotify-grey">
+                                        <th></th>
+                                        <th class="p-1">Predicted<br/>Negative</th>
+                                        <th class="p-1">Predicted<br/>Neutral</th>
+                                        <th class="p-1">Predicted<br/>Positive</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="text-xs text-spotify-grey p-1">Actual<br/>Negative</td>
+                                        <td class="bg-spotify-negative bg-opacity-80 p-2 rounded">8451</td>
+                                        <td class="bg-white bg-opacity-5 p-2">1001</td>
+                                        <td class="bg-white bg-opacity-5 p-2">325</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-xs text-spotify-grey p-1">Actual<br/>Neutral</td>
+                                        <td class="bg-white bg-opacity-5 p-2">837</td>
+                                        <td class="bg-spotify-grey bg-opacity-60 p-2 rounded">8524</td>
+                                        <td class="bg-white bg-opacity-5 p-2">417</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-xs text-spotify-grey p-1">Actual<br/>Positive</td>
+                                        <td class="bg-white bg-opacity-5 p-2">458</td>
+                                        <td class="bg-white bg-opacity-5 p-2">1020</td>
+                                        <td class="bg-spotify-green bg-opacity-80 p-2 rounded">8300</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Training History -->
+                    <div class="bg-black bg-opacity-40 p-4 rounded-lg">
+                        <h3 class="text-lg font-bold mb-3 flex items-center">
+                            <span class="material-icons mr-2 text-spotify-green">timeline</span>
+                            Training History
+                        </h3>
+                        <div class="flex justify-center p-2">
+                            <img src="distilbert-model_trained/training_metrics.png" alt="Training Metrics" class="w-full rounded-lg">
+                        </div>
+                    </div>
+                    
+                    <!-- Model Architecture -->
+                    <div class="bg-black bg-opacity-40 p-4 rounded-lg">
+                        <h3 class="text-lg font-bold mb-3 flex items-center">
+                            <span class="material-icons mr-2 text-spotify-green">architecture</span>
+                            Model Architecture
+                        </h3>
+                        <div class="text-sm">
+                            <p class="mb-2"><span class="font-bold">Base Model:</span> DistilBERT (distilbert-base-uncased)</p>
+                            <p class="mb-2"><span class="font-bold">Parameters:</span> 66M</p>
+                            <p class="mb-2"><span class="font-bold">Layers:</span> 6 transformer blocks</p>
+                            <p class="mb-2"><span class="font-bold">Embedding Size:</span> 768</p>
+                            <p class="mb-2"><span class="font-bold">Training Epochs:</span> 10 (with early stopping)</p>
+                            <p><span class="font-bold">Batch Size:</span> 32</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Final Classification Report -->
+                    <div class="bg-black bg-opacity-40 p-4 rounded-lg mt-6" style="grid-column-start: 1; grid-column-end: 3;">
+                        <h3 class="text-lg font-bold mb-3 flex items-center">
+                            <span class="material-icons mr-2 text-spotify-green">analytics</span>
+                            Final Classification Report
+                        </h3>
+                        <div class="bg-black bg-opacity-50 p-4 rounded-lg overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="text-left text-spotify-grey border-b border-white border-opacity-10">
+                                        <th class="pb-2"></th>
+                                        <th class="pb-2 px-3">Precision</th>
+                                        <th class="pb-2 px-3">Recall</th>
+                                        <th class="pb-2 px-3">F1-score</th>
+                                        <th class="pb-2 px-3">Support</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b border-white border-opacity-5">
+                                        <td class="py-2 font-medium text-spotify-negative">negative</td>
+                                        <td class="py-2 px-3">0.867</td>
+                                        <td class="py-2 px-3">0.864</td>
+                                        <td class="py-2 px-3">0.866</td>
+                                        <td class="py-2 px-3">9777</td>
+                                    </tr>
+                                    <tr class="border-b border-white border-opacity-5">
+                                        <td class="py-2 font-medium text-spotify-grey">neutral</td>
+                                        <td class="py-2 px-3">0.808</td>
+                                        <td class="py-2 px-3">0.872</td>
+                                        <td class="py-2 px-3">0.839</td>
+                                        <td class="py-2 px-3">9778</td>
+                                    </tr>
+                                    <tr class="border-b border-white border-opacity-5">
+                                        <td class="py-2 font-medium text-spotify-green">positive</td>
+                                        <td class="py-2 px-3">0.918</td>
+                                        <td class="py-2 px-3">0.849</td>
+                                        <td class="py-2 px-3">0.882</td>
+                                        <td class="py-2 px-3">9778</td>
+                                    </tr>
+                                    <tr class="border-b border-white border-opacity-10">
+                                        <td class="py-2 font-medium">accuracy</td>
+                                        <td class="py-2 px-3"></td>
+                                        <td class="py-2 px-3"></td>
+                                        <td class="py-2 px-3">0.862</td>
+                                        <td class="py-2 px-3">29333</td>
+                                    </tr>
+                                    <tr class="border-b border-white border-opacity-5">
+                                        <td class="py-2 font-medium">macro avg</td>
+                                        <td class="py-2 px-3">0.864</td>
+                                        <td class="py-2 px-3">0.862</td>
+                                        <td class="py-2 px-3">0.862</td>
+                                        <td class="py-2 px-3">29333</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 font-medium">weighted avg</td>
+                                        <td class="py-2 px-3">0.864</td>
+                                        <td class="py-2 px-3">0.862</td>
+                                        <td class="py-2 px-3">0.862</td>
+                                        <td class="py-2 px-3">29333</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="mt-3 text-xs text-spotify-grey">
+                            The classification report shows detailed metrics for each sentiment class. The positive sentiment class has the highest precision (0.918) but a lower recall (0.849), indicating that while the model is very confident when predicting positive sentiment, it sometimes misses positive reviews. Neutral sentiment has the highest recall (0.872) but lowest precision (0.808), suggesting the model tends to categorize some negative and positive reviews as neutral.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-6 border-t border-white border-opacity-10">
+                    <h3 class="text-lg font-bold mb-2">Model Performance</h3>
+                    <p class="text-sm text-spotify-grey mb-4">
+                        The DistilBERT model achieved a final accuracy of 86.17% on the validation set, with a balanced F1 score of 0.8622 across all classes. The confusion matrix indicates that the model performs well in distinguishing between positive and negative sentiments, with minor confusion primarily occurring between neutral and other classes.
+                    </p>
+                    
+                    <h4 class="font-bold mb-2 text-sm">Training Progress</h4>
+                    
+                    <div class="bg-black bg-opacity-40 p-4 rounded-lg mb-4">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs">
+                                <thead>
+                                    <tr class="text-left text-spotify-grey border-b border-white border-opacity-10">
+                                        <th class="pb-2 pr-2">Epoch</th>
+                                        <th class="pb-2 px-2">Training Loss</th>
+                                        <th class="pb-2 px-2">Training Accuracy</th>
+                                        <th class="pb-2 px-2">Validation Loss</th>
+                                        <th class="pb-2 px-2">Validation Accuracy</th>
+                                        <th class="pb-2 px-2">F1 Score</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b border-white border-opacity-5">
+                                        <td class="py-1 pr-2">1</td>
+                                        <td class="py-1 px-2">0.8318</td>
+                                        <td class="py-1 px-2">60.22%</td>
+                                        <td class="py-1 px-2">0.6880</td>
+                                        <td class="py-1 px-2">69.50%</td>
+                                        <td class="py-1 px-2">0.6991</td>
+                                    </tr>
+                                    <tr class="border-b border-white border-opacity-5">
+                                        <td class="py-1 pr-2">2</td>
+                                        <td class="py-1 px-2">0.6541</td>
+                                        <td class="py-1 px-2">71.39%</td>
+                                        <td class="py-1 px-2">0.6040</td>
+                                        <td class="py-1 px-2">74.10%</td>
+                                        <td class="py-1 px-2">0.7444</td>
+                                    </tr>
+                                    <tr class="border-b border-white border-opacity-5">
+                                        <td class="py-1 pr-2">3</td>
+                                        <td class="py-1 px-2">0.5383</td>
+                                        <td class="py-1 px-2">77.72%</td>
+                                        <td class="py-1 px-2">0.5445</td>
+                                        <td class="py-1 px-2">78.08%</td>
+                                        <td class="py-1 px-2">0.7815</td>
+                                    </tr>
+                                    <tr class="border-b border-white border-opacity-5">
+                                        <td class="py-1 pr-2">4</td>
+                                        <td class="py-1 px-2">0.4023</td>
+                                        <td class="py-1 px-2">84.32%</td>
+                                        <td class="py-1 px-2">0.5144</td>
+                                        <td class="py-1 px-2">80.48%</td>
+                                        <td class="py-1 px-2">0.8056</td>
+                                    </tr>
+                                    <tr class="border-b border-white border-opacity-5">
+                                        <td class="py-1 pr-2">5</td>
+                                        <td class="py-1 px-2">0.2920</td>
+                                        <td class="py-1 px-2">89.21%</td>
+                                        <td class="py-1 px-2">0.5145</td>
+                                        <td class="py-1 px-2">82.37%</td>
+                                        <td class="py-1 px-2">0.8256</td>
+                                    </tr>
+                                    <tr class="border-b border-white border-opacity-5">
+                                        <td class="py-1 pr-2">6</td>
+                                        <td class="py-1 px-2">0.2111</td>
+                                        <td class="py-1 px-2">92.47%</td>
+                                        <td class="py-1 px-2">0.4951</td>
+                                        <td class="py-1 px-2">83.69%</td>
+                                        <td class="py-1 px-2">0.8368</td>
+                                    </tr>
+                                    <tr class="border-b border-white border-opacity-5">
+                                        <td class="py-1 pr-2">7</td>
+                                        <td class="py-1 px-2">0.1530</td>
+                                        <td class="py-1 px-2">94.62%</td>
+                                        <td class="py-1 px-2">0.4989</td>
+                                        <td class="py-1 px-2">84.96%</td>
+                                        <td class="py-1 px-2">0.8497</td>
+                                    </tr>
+                                    <tr class="border-b border-white border-opacity-5">
+                                        <td class="py-1 pr-2">8</td>
+                                        <td class="py-1 px-2">0.1157</td>
+                                        <td class="py-1 px-2">95.99%</td>
+                                        <td class="py-1 px-2">0.5834</td>
+                                        <td class="py-1 px-2">85.14%</td>
+                                        <td class="py-1 px-2">0.8523</td>
+                                    </tr>
+                                    <tr class="border-b border-white border-opacity-5 text-spotify-green">
+                                        <td class="py-1 pr-2 font-bold">9</td>
+                                        <td class="py-1 px-2 font-bold">0.0883</td>
+                                        <td class="py-1 px-2 font-bold">97.00%</td>
+                                        <td class="py-1 px-2 font-bold">0.5713</td>
+                                        <td class="py-1 px-2 font-bold">86.17%</td>
+                                        <td class="py-1 px-2 font-bold">0.8622</td>
+                                    </tr>
+                                    <tr class="text-spotify-grey">
+                                        <td class="py-1 pr-2">10*</td>
+                                        <td class="py-1 px-2">0.0713</td>
+                                        <td class="py-1 px-2">97.59%</td>
+                                        <td class="py-1 px-2">0.5878</td>
+                                        <td class="py-1 px-2">86.12%</td>
+                                        <td class="py-1 px-2">0.8615</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-xs text-spotify-grey mt-2 italic">*Early stopping triggered after epoch 10 due to no improvement in validation metrics</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="font-bold mb-2 text-sm">Training Insights</h4>
+                            <ul class="list-disc pl-5 text-xs text-spotify-grey space-y-1.5">
+                                <li><span class="font-bold">Consistent Progress:</span> The model showed steady improvement throughout training, with accuracy increasing from 60% to 97% on the training set.</li>
+                                <li><span class="font-bold">Early Stopping:</span> Training stopped after epoch 10 as validation metrics began to plateau, preventing overfitting.</li>
+                                <li><span class="font-bold">Optimal Performance:</span> The best model was achieved at epoch 9 with 86.17% validation accuracy and 0.8622 F1 score.</li>
+                                <li><span class="font-bold">Training-Validation Gap:</span> The final training accuracy (97%) was higher than validation accuracy (86%), indicating some degree of overfitting despite regularization techniques.</li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h4 class="font-bold mb-2 text-sm">Performance Analysis</h4>
+                            <ul class="list-disc pl-5 text-xs text-spotify-grey space-y-1.5">
+                                <li><span class="font-bold">Class Imbalance Handling:</span> Despite initially imbalanced data, the model achieved similar performance across all sentiment classes.</li>
+                                <li><span class="font-bold">Validation Loss:</span> While training loss continuously decreased, validation loss stabilized around epoch 6, suggesting the model reached optimal generalization capacity.</li>
+                                <li><span class="font-bold">Learning Rate Impact:</span> The adaptive learning rate with the AdamW optimizer (2e-5) proved effective for this task, allowing rapid initial learning that gradually stabilized.</li>
+                                <li><span class="font-bold">Batch Effects:</span> Gradient accumulation helped stabilize training with the effective batch size of 64 (32×2).</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 bg-black bg-opacity-40 p-4 rounded-lg">
+                        <h4 class="font-bold mb-2 text-sm flex items-center">
+                            <span class="material-icons mr-2 text-spotify-green text-sm">insights</span>
+                            Key Observations
+                        </h4>
+                        <ol class="list-decimal pl-5 text-sm text-spotify-grey space-y-2">
+                            <li>The model demonstrated significant learning in the first 3 epochs, with validation accuracy improving from 69.50% to 78.08%.</li>
+                            <li>Between epochs 4-8, improvements were more gradual, suggesting deeper feature learning.</li>
+                            <li>The gap between training and validation metrics widened after epoch 5, indicating the model was beginning to memorize training examples.</li>
+                            <li>Early stopping at epoch 9 was optimal, as epoch 10 showed signs of overfitting with increased validation loss and slightly decreased F1 score.</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-6 border-t border-white border-opacity-10">
+                    <h3 class="text-lg font-bold mb-2">About the Model</h3>
+                    <p class="text-sm text-spotify-grey">
+                        I chose DistilBERT for this sentiment analysis application as the model can understand complex linguistic patterns in user reviews while maintaining efficiency. As a lightweight transformer model, DistilBERT requires fewer computational resources than its larger counterparts while still capturing the nuances of sentiment in text. It processes reviews quickly, making it ideal for a responsive web application. The model is less likely to overfit on the training data, which helps maintain accuracy across various review styles and vocabularies. Additionally, DistilBERT's balance between performance and efficiency made it the optimal choice for analyzing Spotify reviews in real-time without compromising on understanding the emotional context behind user feedback.
+                    </p>
+                </div>
+
+                <div class="mt-6 pt-6 border-t border-white border-opacity-10">
+                    <h3 class="text-lg font-bold mb-2">Model Training Process</h3>
+                    <div class="text-sm text-spotify-grey">
+                        <p class="mb-2">The training process involved several important steps:</p>
+                        <ul class="list-disc pl-5 space-y-2">
+                            <li>Enhanced data cleaning with emoji handling and text normalization</li>
+                            <li>Balanced dataset creation through augmentation techniques</li>
+                            <li>Training using AdamW optimizer with learning rate of 2e-5</li>
+                            <li>Implementation of early stopping to prevent overfitting</li>
+                            <li>Mixed precision training for improved performance</li>
+                            <li>Gradient accumulation for stability with larger effective batch sizes</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script src="./script.js"></script>
+
+    <!-- Image Modal -->
+    <div id="image-modal" class="fixed inset-0 bg-black bg-opacity-85 z-50 flex items-center justify-center hidden">
+        <div class="relative max-w-[90%] max-h-[90%]">
+            <button id="close-image-modal" class="absolute top-2 right-2 text-white bg-black bg-opacity-50 rounded-full p-1 hover:bg-opacity-70 transition-all">
+                <span class="material-icons">close</span>
+            </button>
+            <img id="modal-image" src="" alt="Enlarged Image" class="max-w-full max-h-[85vh] object-contain rounded-lg">
+        </div>
+    </div>
 </body>
 </html>
