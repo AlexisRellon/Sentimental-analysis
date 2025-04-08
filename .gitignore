@@ -1,0 +1,7 @@
+# Do not include such files in the repository
+*.zip
+*.tar.gz
+*.docx
+*.pdf
+*.pptx
+*.xlsx
