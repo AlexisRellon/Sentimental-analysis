@@ -44,6 +44,7 @@ except:
     print("Downloading required NLTK data...")
     nltk.download('stopwords')
     nltk.download('punkt')
+    nltk.download('punkt_tab')
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
