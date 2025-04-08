@@ -148,18 +148,109 @@ function clearReviewHistory() {
 function showAnalysisPanel() {
     document.getElementById('analysis-panel').classList.remove('hidden');
     document.getElementById('history-panel').classList.add('hidden');
+    document.getElementById('model-results-panel').classList.add('hidden');
+    
+    // Update navigation highlight
     document.querySelector('#history-link').classList.remove('text-white');
     document.querySelector('#history-link').classList.add('text-spotify-grey');
+    document.querySelector('#model-results').classList.remove('text-white');
+    document.querySelector('#model-results').classList.add('text-spotify-grey');
+    document.querySelector('#analysis').classList.add('text-white');
+    document.querySelector('#analysis').classList.remove('text-spotify-grey');
 }
 
 // Show the history panel
 function showHistoryPanel() {
     document.getElementById('analysis-panel').classList.add('hidden');
     document.getElementById('history-panel').classList.remove('hidden');
+    document.getElementById('model-results-panel').classList.add('hidden');
+    
+    // Update navigation highlight
     document.querySelector('#history-link').classList.add('text-white');
     document.querySelector('#history-link').classList.remove('text-spotify-grey');
+    document.querySelector('#model-results').classList.remove('text-white');
+    document.querySelector('#model-results').classList.add('text-spotify-grey');
+    document.querySelector('#analysis').classList.remove('text-white');
+    document.querySelector('#analysis').classList.add('text-spotify-grey');
+    
     updateHistoryDisplay();
 }
+
+// Show the model results panel
+function showModelResultsPanel() {
+    document.getElementById('analysis-panel').classList.add('hidden');
+    document.getElementById('history-panel').classList.add('hidden');
+    document.getElementById('model-results-panel').classList.remove('hidden');
+    
+    // Update navigation highlight
+    document.querySelector('#history-link').classList.remove('text-white');
+    document.querySelector('#history-link').classList.add('text-spotify-grey');
+    document.querySelector('#model-results').classList.add('text-white');
+    document.querySelector('#model-results').classList.remove('text-spotify-grey');
+    document.querySelector('#analysis').classList.remove('text-white');
+    document.querySelector('#analysis').classList.add('text-spotify-grey');
+}
+
+// Image modal functionality
+function setupImageModal() {
+    // Get all images that should be clickable to enlarge
+    const clickableImages = document.querySelectorAll('#model-results-panel img');
+    const imageModal = document.getElementById('image-modal');
+    const modalImage = document.getElementById('modal-image');
+    const closeButton = document.getElementById('close-image-modal');
+    
+    // Add click event to each image
+    clickableImages.forEach(img => {
+        img.classList.add('cursor-pointer', 'hover:opacity-80', 'transition-opacity');
+        img.setAttribute('title', 'Click to enlarge');
+        
+        img.addEventListener('click', function() {
+            // Set the modal image source to the clicked image
+            modalImage.src = this.src;
+            // Show the modal
+            imageModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; // Prevent scrolling when modal is open
+        });
+    });
+    
+    // Close modal when clicking the close button
+    closeButton.addEventListener('click', function() {
+        imageModal.classList.add('hidden');
+        document.body.style.overflow = 'auto'; // Restore scrolling
+    });
+    
+    // Close modal when clicking outside the image
+    imageModal.addEventListener('click', function(e) {
+        if (e.target === imageModal) {
+            imageModal.classList.add('hidden');
+            document.body.style.overflow = 'auto'; // Restore scrolling
+        }
+    });
+    
+    // Close modal when pressing the Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && !imageModal.classList.contains('hidden')) {
+            imageModal.classList.add('hidden');
+            document.body.style.overflow = 'auto'; // Restore scrolling
+        }
+    });
+}
+
+// Initialize the image modal functionality when showing the model results panel
+const originalShowModelResultsPanel = showModelResultsPanel;
+showModelResultsPanel = function() {
+    originalShowModelResultsPanel();
+    // Setup image modal after the panel is shown
+    setTimeout(setupImageModal, 100);
+};
+
+// Update all clickable images whenever new content is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Initial setup
+    if (!document.getElementById('model-results-panel').classList.contains('hidden')) {
+        setupImageModal();
+    }
+});
 
 // Initialize history
 loadReviewHistory();
@@ -168,6 +259,12 @@ loadReviewHistory();
 document.getElementById('history-link').addEventListener('click', function(e) {
     e.preventDefault();
     showHistoryPanel();
+});
+
+// Add event listener for Model Results link
+document.getElementById('model-results').addEventListener('click', function(e) {
+    e.preventDefault();
+    showModelResultsPanel();
 });
 
 // Add event listener for Sentiment Analysis link - using a more specific selector
