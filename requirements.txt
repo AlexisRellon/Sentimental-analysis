@@ -1,0 +1,8 @@
+torch
+transformers
+nltk
+emoji
+flask
+flask-cors
+joblib
+gunicorn
