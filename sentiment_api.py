@@ -216,73 +216,106 @@ def analyze_sentiment():
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
         response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
         return response
-        
-    if not request.json or 'text' not in request.json:
-        return jsonify({'error': 'No text provided'}), 400
-    
-    # Check if tokenizer and model are loaded
-    if tokenizer is None:
-        return jsonify({
-            'error': 'Tokenizer not loaded. Please check server logs.',
-            'sentiment': 'neutral',
-            'confidence': 0
-        }), 500
-        
-    if model is None:
-        return jsonify({
-            'error': 'Model not loaded. Please check server logs.',
-            'sentiment': 'neutral',
-            'confidence': 0
-        }), 500
-    
-    review_text = request.json['text']
-    
-    # Preprocess the text
-    processed_text = preprocess_text(review_text)
-    
-    if not processed_text or len(processed_text) < 5:
-        return jsonify({
-            'sentiment': 'neutral', 
-            'confidence': 0,
-            'message': 'Text too short for accurate analysis'
-        })
     
     try:
-        # Tokenize the text
-        inputs = tokenizer(
-            processed_text,
-            return_tensors="pt",
-            truncation=True,
-            padding="max_length",
-            max_length=128
-        ).to(device)
+        print("POST request received at /analyze endpoint")
         
-        # Predict the sentiment
-        with torch.no_grad():
-            outputs = model(**inputs)
+        # Log request data for debugging
+        print(f"Request headers: {request.headers}")
+        print(f"Request data: {request.get_data()}")
         
-        # Get prediction and confidence
-        probs = torch.nn.functional.softmax(outputs.logits, dim=1)
-        prediction = torch.argmax(outputs.logits, dim=1).item()
-        confidence = probs[0][prediction].item() * 100
+        if not request.json:
+            print("Error: Request does not contain valid JSON")
+            return jsonify({'error': 'Invalid JSON in request'}), 400
+            
+        if 'text' not in request.json:
+            print("Error: 'text' field not found in JSON")
+            return jsonify({'error': 'No text provided'}), 400
         
-        # Add CORS headers to the response
-        response = jsonify({
-            'sentiment': sentiment_map[prediction],
-            'confidence': confidence,
-            'processed_text': processed_text
-        })
-        response.headers.add('Access-Control-Allow-Origin', '*')
+        # Check if tokenizer and model are loaded
+        if tokenizer is None:
+            print("Error: Tokenizer not loaded")
+            return jsonify({
+                'error': 'Tokenizer not loaded. Please check server logs.',
+                'sentiment': 'neutral',
+                'confidence': 0
+            }), 500
+            
+        if model is None:
+            print("Error: Model not loaded")
+            return jsonify({
+                'error': 'Model not loaded. Please check server logs.',
+                'sentiment': 'neutral',
+                'confidence': 0
+            }), 500
         
-        return response
+        review_text = request.json['text']
+        print(f"Received text for analysis: '{review_text}'")
         
+        # Preprocess the text
+        processed_text = preprocess_text(review_text)
+        print(f"Processed text: '{processed_text}'")
+        
+        if not processed_text or len(processed_text) < 5:
+            print("Text too short for analysis")
+            return jsonify({
+                'sentiment': 'neutral', 
+                'confidence': 0,
+                'message': 'Text too short for accurate analysis'
+            })
+        
+        try:
+            # Tokenize the text
+            print("Tokenizing text...")
+            inputs = tokenizer(
+                processed_text,
+                return_tensors="pt",
+                truncation=True,
+                padding="max_length",
+                max_length=128
+            ).to(device)
+            
+            # Predict the sentiment
+            print("Running model inference...")
+            with torch.no_grad():
+                outputs = model(**inputs)
+            
+            # Get prediction and confidence
+            probs = torch.nn.functional.softmax(outputs.logits, dim=1)
+            prediction = torch.argmax(outputs.logits, dim=1).item()
+            confidence = probs[0][prediction].item() * 100
+            
+            print(f"Prediction: {sentiment_map[prediction]}, Confidence: {confidence:.2f}%")
+            
+            # Add CORS headers to the response
+            response = jsonify({
+                'sentiment': sentiment_map[prediction],
+                'confidence': confidence,
+                'processed_text': processed_text
+            })
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            
+            print("Successfully analyzed sentiment")
+            return response
+            
+        except Exception as e:
+            print(f"Error during model inference: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            return jsonify({
+                'error': f'Model inference error: {str(e)}',
+                'sentiment': 'neutral',
+                'confidence': 0
+            }), 500
+    
     except Exception as e:
-        print(f"Error during sentiment analysis: {e}")
+        print(f"Uncaught error in analyze_sentiment: {e}")
         import traceback
         traceback.print_exc()
         
         return jsonify({
-            'error': str(e),
+            'error': f'Server error: {str(e)}',
             'sentiment': 'neutral',
             'confidence': 0
         }), 500

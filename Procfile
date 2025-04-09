@@ -1,1 +1,1 @@
-web: bash render_setup.sh && gunicorn sentiment_api:app --bind 0.0.0.0:$PORT
+web: bash render_setup.sh && gunicorn wsgi:app --bind 0.0.0.0:$PORT
