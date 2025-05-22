@@ -1,23 +1,16 @@
 #!/bin/bash
 
-# This script ensures Git LFS files are properly pulled during Render deployment
+echo "Starting setup script..."
 
-echo "Starting setup script for Git LFS files..."
+# Install Python dependencies
+echo "Installing Python dependencies..."
+pip install -r requirements.txt
 
-# Check if Git LFS is installed
-if ! command -v git-lfs &> /dev/null; then
-    echo "Git LFS not found, installing..."
-    curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
-    sudo apt-get install git-lfs
-else
-    echo "Git LFS is already installed"
-fi
+# Run the download script to fetch model files
+echo "Downloading model files..."
+python download_models.py
 
-# Initialize Git LFS
-echo "Initializing Git LFS..."
-git lfs install
-
-# Pull LFS files
+echo "Setup completed!"
 echo "Pulling LFS files..."
 git lfs pull
 
